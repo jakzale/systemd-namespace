@@ -7,3 +7,9 @@ TODO
   - [ ] /etc/wsl.conf
   - [ ] improved /etc/profile
 
+Other services to be started with systemd
+- [ ] keyring/secretservice (gnome-keyring)
+- [ ] ssh-agent (or above)
+- [ ] gpg-agent (or above)
+- [ ] keybase (without gui)
+
