@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 
+#include <nsenter.h>
 
 char* get_systemd_pid(char* buff) {
     FILE* pipe_fp;
