@@ -28,12 +28,22 @@ void __attribute__((__noreturn__)) exec_shell(void)
 	const char *shell_basename;
 	char *arg0;
 
-	if (!shell)
+	if (!shell) {
 		shell = DEFAULT_SHELL;
+    }
 
-	shellc = xstrdup(shell);
-	shell_basename = basename(shellc);
-	arg0 = xmalloc(strlen(shell_basename) + 2);
+	if ((shellc = strdup(shell)) == NULL) {
+        perror("strdup");
+        err(EXIT_FAILURE, "insufficient memory");
+    }
+	
+    shell_basename = basename(shellc);
+
+    if ((arg0 = malloc(strlen(shell_basename) + 2)) == NULL) {
+        perror("malloc");
+        err(EXIT_FAILURE, "insufficient memory");
+    }
+
 	arg0[0] = '-';
 	strcpy(arg0 + 1, shell_basename);
 
@@ -48,12 +58,14 @@ static void continue_as_child(void)
     int status;
     pid_t ret;
 
-    if (child < 0)
+    if (child < 0) {
         err(EXIT_FAILURE, "fork failed");
+    }
 
     /* Only the child returns */
-    if (child == 0)
+    if (child == 0) {
         return;
+    }
 
     for (;;) {
         ret = waitpid(child, &status, WUNTRACED);
@@ -65,12 +77,14 @@ static void continue_as_child(void)
             break;
         }
     }
+
     /* Return the child's exit code if possible */
     if (WIFEXITED(status)) {
         exit(WEXITSTATUS(status));
     } else if (WIFSIGNALED(status)) {
         kill(getpid(), WTERMSIG(status));
     }
+
     exit(EXIT_FAILURE);
 }
 
@@ -78,14 +92,14 @@ void open_and_setns(pid_t pid, char* type, int nstype) {
     char ns_path[PATH_MAX];
     int ns_fd;
     
-    snprintf(ns_path, sizeof(ns_path), "/proc/%u/%s", pid, type);
+    snprintf(ns_path, sizeof(ns_path), "/proc/%i/ns/%s", pid, type);
     
     if ((ns_fd = open(ns_path, O_RDONLY)) < 0) {
         err(EXIT_FAILURE, "unable to open namespace %s", ns_path);
     }
 
-    if (setns(nstype, nstype)) {
-        err(EXIT_FAILURE, "unable to reassociate to namespace %s");
+    if (setns(ns_fd, nstype) < 0) {
+        err(EXIT_FAILURE, "unable to reassociate to namespace %s", ns_path);
     }
 
     close(ns_fd);
@@ -96,7 +110,6 @@ void systemd_nsenter(pid_t systemd_pid, char* wd_path)
     int wd_fd;
 
     open_and_setns(systemd_pid, "pid", CLONE_NEWPID);
-
     open_and_setns(systemd_pid, "mnt", CLONE_NEWNS);
 
     if ((wd_fd = open(wd_path, O_RDONLY)) < 0) {
