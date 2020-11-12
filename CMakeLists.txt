@@ -7,4 +7,5 @@ project(systemd-wsl
 add_subdirectory(nsenter)
 
 add_executable(systemd-namespace main.c)
-target_link_libraries(systemd-namespace nsenter)
+# TODO:  use find_library to ensure we can find procps.
+target_link_libraries(systemd-namespace nsenter procps)

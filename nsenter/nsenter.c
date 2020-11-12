@@ -108,7 +108,10 @@ void open_and_setns(pid_t pid, char* type, int nstype) {
 void systemd_nsenter(pid_t systemd_pid, char* wd_path)
 {
     int wd_fd;
+    uid_t uid = getuid();
+    uid_t gid = getgid();
 
+    // TODO:  This could be greatly simplified in kernel 5.8+
     open_and_setns(systemd_pid, "pid", CLONE_NEWPID);
     open_and_setns(systemd_pid, "mnt", CLONE_NEWNS);
 
@@ -123,6 +126,9 @@ void systemd_nsenter(pid_t systemd_pid, char* wd_path)
     close(wd_fd);
 
     continue_as_child();
+
+    setuid(uid);
+    setgid(gid);
 
     exec_shell();
 }

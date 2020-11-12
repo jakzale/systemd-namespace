@@ -8,34 +8,28 @@
 #include <sys/mman.h>
 
 #include <nsenter.h>
+#include <proc/readproc.h>
 
 pid_t get_systemd_pid() {
-    FILE* pipe_fp;
-    int len;
-    char data[64];
-    pid_t systemd_pid = 0;
+    PROCTAB *PT;
+    proc_t task;
+    pid_t pid = -1;
+    unsigned long long start_time = ~0ULL;
 
-    // TODO:  Potenial security vuln
-    if ((pipe_fp = popen("/usr/bin/pgrep -o systemd$", "r")) == NULL) {
-        perror("popen");
-        return -1;
+    PT = openproc(PROC_FILLSTATUS);
+
+    memset(&task, 0, sizeof(task));
+    while (readproc(PT, &task)) {
+        char* cmd = task.cmd;
+        if (strcmp(cmd, "systemd") == 0 && task.start_time < start_time) {
+            pid = task.tid;
+            start_time = task.start_time;
+        }
     }
 
-    // reading from the pipe
-    if (fgets(data, 64, pipe_fp) == NULL) {
-        perror("fgets");
-        return -1;
-    }
+    closeproc(PT);
 
-    pclose(pipe_fp);
-
-    systemd_pid = atoi(data);
-
-    if (systemd_pid < 1 || systemd_pid > 4194304) {
-        return -1;
-    }
-
-    return systemd_pid;
+    return pid;
 }
 
 int main(int argc, char *argv[]) {
@@ -44,12 +38,12 @@ int main(int argc, char *argv[]) {
 
     // get pid of systemd
     if ((systemd_pid = get_systemd_pid()) < 0) {
-        err(EXIT_FAILURE, "Unable to find systemd: %m");
+        err(EXIT_FAILURE, "Unable to find systemd");
     }
 
     // get current directory
     if (getcwd(cwd, PATH_MAX) == NULL) {
-        err(EXIT_FAILURE, "Unable to determine cwd: %m");
+        err(EXIT_FAILURE, "Unable to determine cwd");
     }
 
     // Switch namespace
