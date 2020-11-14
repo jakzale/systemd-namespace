@@ -1,17 +1,13 @@
-#include <stdio.h>
-#include <unistd.h>
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <linux/limits.h>
-#include <sys/types.h>
-#include <sys/mman.h>
-#include <bits/local_lim.h>
+
+#include <proc/readproc.h>
+#include <security/pam_appl.h>
 
 #include <nsenter.h>
-#include <proc/readproc.h>
-
-#include <security/pam_appl.h>
 
 static pid_t
 get_systemd_pid(void)
