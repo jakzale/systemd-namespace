@@ -7,11 +7,11 @@ We use this tool to enter all the namespaces associated with the systemd process
 - [ ] add proper PAM session/login (shadow-utils/login)
 - [X] reimplement nsenter to avoid external call
 - [X] reimplement pgrep to avoid external call
-- [ ] move everything to a single C file
+- [X] move everything to a single C file
 - [ ] add install script
   - [ ] /etc/wsl.conf
   - [ ] improved /etc/profile
-- [ ] adopt the suckless [C coding style](https://suckless.org/coding_style/)
+- [-] adopt the suckless [C coding style](https://suckless.org/coding_style/)
 
 Other services to be started with systemd
 - [ ] keyring/secretservice (gnome-keyring)

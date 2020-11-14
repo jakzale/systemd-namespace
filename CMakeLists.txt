@@ -4,8 +4,6 @@ project(systemd-wsl
         VERSION 0.0.1
         LANGUAGES C)
 
-add_subdirectory(nsenter)
-
-add_executable(systemd-namespace main.c)
+add_executable(systemd-wsl-helper systemd-wsl-helper.c)
 # TODO:  use find_library to ensure we can find procps.
-target_link_libraries(systemd-namespace nsenter procps pam)
+target_link_libraries(systemd-wsl-helper procps pam)

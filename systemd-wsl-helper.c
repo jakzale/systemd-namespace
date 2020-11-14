@@ -1,25 +1,82 @@
+/* See LICENSE for license details. */
+
 #define _GNU_SOURCE
 
-#include <string.h>
-#include <errno.h>
-#include <sched.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <linux/limits.h>
-#include <fcntl.h>
-#include <signal.h>
 #include <err.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <libgen.h>
 #include <publib.h>
+#include <sched.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <linux/limits.h>
+#include <sys/wait.h>
+
+#include <proc/readproc.h>
+#include <security/pam_appl.h>
 
 #define EX_EXEC_FAILED		126	/* Program located, but not usable. */
 #define EX_EXEC_ENOENT		127	/* Could not find program to exec.  */
 #define errexec(name)	err(errno == ENOENT ? EX_EXEC_ENOENT : EX_EXEC_FAILED, \
 			"failed to execute %s", name)
-
-
 #define DEFAULT_SHELL "/bin/sh"
+
+static pid_t get_systemd_pid(void);
+static void login_user(char *username);
+static void __attribute__((__noreturn__)) exec_shell(void);
+static void continue_as_child(void);
+static void open_and_setns(pid_t pid, char* type, int nstype);
+static void systemd_nsenter(pid_t systemd_pid, char* wd_path);
+
+/**
+ * @brief Get the systemd pid object
+ * 
+ * @return pid_t 
+ */
+static pid_t
+get_systemd_pid(void)
+{
+    PROCTAB *PT;
+    proc_t task;
+    pid_t pid = -1;
+    unsigned long long start_time = ~0ULL;
+
+    PT = openproc(PROC_FILLSTATUS);
+
+    memset(&task, 0, sizeof(task));
+    while (readproc(PT, &task)) {
+        char* cmd = task.cmd;
+        if (strcmp(cmd, "systemd") == 0 && task.start_time < start_time) {
+            pid = task.tid;
+            start_time = task.start_time;
+        }
+    }
+
+    closeproc(PT);
+
+    return pid;
+}
+
+/**
+ * @brief 
+ * 
+ * @param username 
+ */
+static void
+login_user(char* username)
+{
+    int rc;
+    // TODO:  verify that service name is correct
+    char service_name[] = "login";
+    pam_handle_t *pamh = NULL;
+
+    rc = pam_start(service_name, username, NULL, &pamh);
+
+}
 
 static void __attribute__((__noreturn__))
 exec_shell(void)
@@ -136,4 +193,27 @@ systemd_nsenter(pid_t systemd_pid, char* wd_path)
     setgid(gid);
 
     exec_shell();
+}
+
+int main(int argc, char *argv[])
+{
+    pid_t systemd_pid;
+    char cwd[PATH_MAX];
+
+    /* Get pid of the oldest systemd process */
+    if ((systemd_pid = get_systemd_pid()) < 0) {
+        err(EXIT_FAILURE, "Unable to find systemd");
+    }
+
+    // get current directory
+    if (getcwd(cwd, PATH_MAX) == NULL) {
+        err(EXIT_FAILURE, "Unable to determine cwd");
+    }
+
+    // Switch namespace
+    systemd_nsenter(systemd_pid, cwd);
+
+    // TODO:  Login the user
+
+    err(EXIT_FAILURE, "Entering systemd namespace failed!");
 }
