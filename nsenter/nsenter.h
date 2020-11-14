@@ -3,6 +3,7 @@
 
 #include <sys/types.h>
 
-extern void systemd_nsenter(pid_t systemd_pid, char* wd_path);
+extern void
+systemd_nsenter(pid_t systemd_pid, char* wd_path);
 
 #endif

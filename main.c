@@ -13,7 +13,9 @@
 
 #include <security/pam_appl.h>
 
-pid_t get_systemd_pid() {
+static pid_t
+get_systemd_pid(void)
+{
     PROCTAB *PT;
     proc_t task;
     pid_t pid = -1;
@@ -36,7 +38,8 @@ pid_t get_systemd_pid() {
 }
 
 /*
-void login_user(char* username)
+static void
+login_user(char* username)
 {
     int rc;
     // TODO:  verify that service name is correct
@@ -48,7 +51,8 @@ void login_user(char* username)
 }
 */
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     pid_t systemd_pid;
     char cwd[PATH_MAX];
 

@@ -21,7 +21,8 @@
 
 #define DEFAULT_SHELL "/bin/sh"
 
-void __attribute__((__noreturn__)) exec_shell(void)
+static void __attribute__((__noreturn__))
+exec_shell(void)
 {
 	const char *shell = getenv("SHELL");
 	char *shellc;
@@ -52,7 +53,8 @@ void __attribute__((__noreturn__)) exec_shell(void)
 }
 
 
-static void continue_as_child(void)
+static void
+continue_as_child(void)
 {
     pid_t child = fork();
     int status;
@@ -88,7 +90,9 @@ static void continue_as_child(void)
     exit(EXIT_FAILURE);
 }
 
-void open_and_setns(pid_t pid, char* type, int nstype) {
+static void
+open_and_setns(pid_t pid, char* type, int nstype)
+{
     char ns_path[PATH_MAX];
     int ns_fd;
     
@@ -105,7 +109,8 @@ void open_and_setns(pid_t pid, char* type, int nstype) {
     close(ns_fd);
 }
 
-void systemd_nsenter(pid_t systemd_pid, char* wd_path)
+void
+systemd_nsenter(pid_t systemd_pid, char* wd_path)
 {
     int wd_fd;
     uid_t uid = getuid();
