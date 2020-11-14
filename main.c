@@ -6,9 +6,12 @@
 #include <linux/limits.h>
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <bits/local_lim.h>
 
 #include <nsenter.h>
 #include <proc/readproc.h>
+
+#include <security/pam_appl.h>
 
 pid_t get_systemd_pid() {
     PROCTAB *PT;
@@ -32,11 +35,24 @@ pid_t get_systemd_pid() {
     return pid;
 }
 
+/*
+void login_user(char* username)
+{
+    int rc;
+    // TODO:  verify that service name is correct
+    char service_name[] = "login";
+    pam_handle_t *pamh = NULL;
+
+    rc = pam_start(service_name, username, NULL, &pamh);
+
+}
+*/
+
 int main(int argc, char *argv[]) {
     pid_t systemd_pid;
     char cwd[PATH_MAX];
 
-    // get pid of systemd
+    /* Get pid of the oldest systemd process */
     if ((systemd_pid = get_systemd_pid()) < 0) {
         err(EXIT_FAILURE, "Unable to find systemd");
     }
@@ -48,6 +64,8 @@ int main(int argc, char *argv[]) {
 
     // Switch namespace
     systemd_nsenter(systemd_pid, cwd);
+
+    // TODO:  Login the user
 
     err(EXIT_FAILURE, "Entering systemd namespace failed!");
 }
